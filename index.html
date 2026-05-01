@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="JVRK25sEDq5lU4PVlfkM_KMiiuPCdonSHWA_FiUFCaQ" />
+  <title>Diaclopedia</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #e0d6c8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 48px 24px 32px;
+      text-align: center;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #c8a96e;
+      letter-spacing: 0.05em;
+    }
+
+    header p.tagline {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: #8a8070;
+    }
+
+    main {
+      width: 100%;
+      max-width: 680px;
+      padding: 40px 24px;
+    }
+
+    section {
+      margin-bottom: 40px;
+    }
+
+    section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #c8a96e;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    section p {
+      font-size: 0.9rem;
+      line-height: 1.75;
+      color: #b0a898;
+    }
+
+    ul.features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    ul.features li {
+      font-size: 0.9rem;
+      color: #b0a898;
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    ul.features li::before {
+      content: "·";
+      position: absolute;
+      left: 0;
+      color: #c8a96e;
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .links a {
+      font-size: 0.9rem;
+      color: #c8a96e;
+      text-decoration: none;
+      border-bottom: 1px solid #3a2f1e;
+      padding-bottom: 4px;
+      transition: color 0.2s;
+    }
+
+    .links a:hover {
+      color: #e0c890;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 24px;
+      font-size: 0.8rem;
+      color: #4a4540;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Diaclopedia</h1>
+    <p class="tagline">Diablo II: Resurrected Item Encyclopedia</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>About</h2>
+      <p>
+        Diaclopedia is an item encyclopedia app for Diablo II: Resurrected.
+        Browse and search detailed stats for weapons, armor, unique items,
+        set items, runewords, and runes — all in one place.
+      </p>
+    </section>
+
+    <section>
+      <h2>Features</h2>
+      <ul class="features">
+        <li>Search items by name or attributes</li>
+        <li>Browse unique items, set items, and runewords</li>
+        <li>Runeword combination lookup</li>
+        <li>Attribute-based item search</li>
+        <li>Available on Android and iOS</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Legal</h2>
+      <div class="links">
+        <a href="en/privacy.html">Privacy Policy</a>
+        <a href="en/terms.html">Terms of Service</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    &copy; 2025 Diaclopedia. All rights reserved.
+  </footer>
+</body>
+</html>
