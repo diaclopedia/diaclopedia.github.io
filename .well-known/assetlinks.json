@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.diaclopedia.neo",
+      "sha256_cert_fingerprints": [
+        "E9:B8:66:86:8B:BD:7D:8A:A6:5F:D2:F3:BB:53:D3:0D:20:15:EC:28:83:BD:1D:39:90:2C:E7:92:06:5E:A3:83",
+        "4B:56:59:5B:FD:0C:E0:F9:7B:F8:72:7C:AA:71:8B:AE:A6:CA:1D:7C:1C:71:39:BB:2A:47:B1:E3:8C:6D:F6:F6"
+      ]
+    }
+  }
+]

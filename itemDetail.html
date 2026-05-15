@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Diaclopedia</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #e0d6c8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #c8a96e;
+      letter-spacing: 0.05em;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      background: #141414;
+      text-align: center;
+    }
+
+    .message {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #b0a898;
+      margin-bottom: 24px;
+    }
+
+    .message .sub {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #6a6258;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #c8a96e;
+      color: #0d0d0d;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: background 0.2s;
+    }
+
+    .cta:hover {
+      background: #e0c890;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="brand">Diaclopedia</div>
+
+  <div class="card">
+    <div id="ios-message" class="hidden">
+      <p class="message">
+        현재 iOS는 지원하지 않습니다.
+        <span class="sub">iOS is not supported yet.</span>
+      </p>
+    </div>
+
+    <div id="default-message" class="hidden">
+      <p class="message">
+        앱이 설치되어 있지 않습니다.
+        <span class="sub">The app is not installed on this device.</span>
+      </p>
+      <a class="cta" href="https://play.google.com/store/apps/details?id=com.diaclopedia.neo">
+        Google Play에서 받기
+      </a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/i.test(ua);
+      var id = isIOS ? 'ios-message' : 'default-message';
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    })();
+  </script>
+</body>
+</html>
