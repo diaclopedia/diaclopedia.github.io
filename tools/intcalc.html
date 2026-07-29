@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마이너스통장 이자 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE8DA;
+    --paper-line:#C7BFA6;
+    --ink:#1C2B45;
+    --ink-soft:#4B5A73;
+    --stamp:#A63A2E;
+    --stamp-soft:#C77A6C;
+    --paper-dark:#E2DBC8;
+    --white:#FBF9F3;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 38px;
+    color:var(--ink);
+    font-family:'Noto Serif KR', serif;
+    min-height:100vh;
+    padding:32px 16px 80px;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+  }
+  .passbook{
+    background:var(--white);
+    border:1px solid var(--paper-line);
+    box-shadow: 0 2px 0 var(--paper-line), 0 18px 40px -20px rgba(28,43,69,0.35);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  header{
+    padding:28px 28px 22px;
+    border-bottom:2px solid var(--ink);
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.28em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  h1{
+    margin:6px 0 4px;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .stamp{
+    position:absolute;
+    top:22px;
+    right:26px;
+    width:64px;
+    height:64px;
+    border:2.5px solid var(--stamp);
+    border-radius:50%;
+    color:var(--stamp);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.05em;
+    transform:rotate(-8deg);
+    opacity:0.85;
+  }
+  .stamp span:first-child{font-size:9px; letter-spacing:0.2em; margin-bottom:2px;}
+
+  .panel{ padding:24px 28px; }
+  .panel + .panel{ border-top:1px dashed var(--paper-line); }
+
+  .field-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+    margin-bottom:4px;
+  }
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  input[type=number], input[type=month], input[type=date], input[type=text]{
+    width:100%;
+    border:none;
+    border-bottom:1.5px solid var(--ink);
+    background:transparent;
+    padding:8px 2px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:16px;
+    color:var(--ink);
+  }
+  input:focus{ outline:none; border-bottom-color:var(--stamp); }
+
+  .section-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--ink);
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--paper-line);
+  }
+
+  .entries{ display:flex; flex-direction:column; gap:10px; }
+  .entry-row{
+    display:grid;
+    grid-template-columns: 44px 1fr 1fr 32px;
+    align-items:end;
+    gap:10px;
+  }
+  .entry-idx{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    padding-bottom:9px;
+  }
+  .del-btn{
+    background:none;
+    border:1px solid var(--paper-line);
+    color:var(--ink-soft);
+    width:28px; height:28px;
+    border-radius:50%;
+    cursor:pointer;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    line-height:1;
+    margin-bottom:6px;
+    transition:all .15s ease;
+  }
+  .del-btn:hover{ border-color:var(--stamp); color:var(--stamp); }
+
+  .add-btn{
+    margin-top:14px;
+    background:none;
+    border:1.5px dashed var(--ink-soft);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.05em;
+    padding:10px 16px;
+    width:100%;
+    cursor:pointer;
+    border-radius:2px;
+    transition: all .15s ease;
+  }
+  .add-btn:hover{ border-color:var(--stamp); color:var(--stamp); background:rgba(166,58,46,0.04); }
+
+  .calc-btn{
+    margin-top:22px;
+    width:100%;
+    background:var(--ink);
+    color:var(--white);
+    border:none;
+    padding:15px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    cursor:pointer;
+    border-radius:2px;
+    transition: background .15s ease;
+  }
+  .calc-btn:hover{ background:var(--stamp); }
+
+  .result-total{
+    text-align:center;
+    padding:30px 28px 10px;
+  }
+  .result-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.3em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .result-amount{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:44px;
+    font-weight:600;
+    color:var(--stamp);
+    letter-spacing:-0.01em;
+    margin:8px 0 2px;
+    word-break:break-all;
+  }
+  .result-formula{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    margin-top:18px;
+  }
+  th,td{
+    text-align:right;
+    padding:9px 6px;
+    border-bottom:1px solid var(--paper-line);
+    white-space:nowrap;
+  }
+  th:first-child, td:first-child{ text-align:left; }
+  th{
+    font-weight:500;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-size:10.5px;
+    border-bottom:1.5px solid var(--ink);
+  }
+  tfoot td{
+    border-bottom:none;
+    border-top:2px solid var(--ink);
+    font-weight:600;
+    padding-top:12px;
+  }
+  .formula-cell{ color:var(--ink-soft); font-size:11px; text-align:right; }
+
+  .note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.7;
+    padding:18px 28px 26px;
+    border-top:1px dashed var(--paper-line);
+  }
+  .note b{ color:var(--ink); }
+  .warn{
+    color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    margin-top:10px;
+  }
+  .hidden{ display:none; }
+
+  textarea#pasteInput{
+    width:100%;
+    min-height:120px;
+    border:1.5px solid var(--paper-line);
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    line-height:1.6;
+    padding:12px;
+    border-radius:2px;
+    resize:vertical;
+  }
+  textarea#pasteInput:focus{ outline:none; border-color:var(--stamp); }
+  .paste-hint{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin:6px 0 12px;
+    line-height:1.6;
+  }
+  .convert-btn{
+    background:none;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.08em;
+    padding:10px 18px;
+    cursor:pointer;
+    border-radius:2px;
+    transition: all .15s ease;
+  }
+  .convert-btn:hover{ background:var(--ink); color:var(--white); }
+  .error-box{
+    margin-top:14px;
+    border:1.5px solid var(--stamp);
+    background:rgba(166,58,46,0.06);
+    padding:12px 14px;
+    border-radius:2px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--stamp);
+    line-height:1.8;
+  }
+  .error-box .error-title{
+    font-weight:600;
+    letter-spacing:0.05em;
+    margin-bottom:4px;
+    text-transform:uppercase;
+    font-size:11px;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:24px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    letter-spacing:0.05em;
+  }
+
+  @media (max-width:520px){
+    .field-row{ grid-template-columns:1fr; }
+    .result-amount{ font-size:32px; }
+    header, .panel{ padding-left:18px; padding-right:18px; }
+    .stamp{ width:52px; height:52px; font-size:10px; top:18px; right:16px;}
+    table{ font-size:11px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="passbook">
+    <header>
+      <div class="eyebrow">Interest Ledger · 이자 원장</div>
+      <h1>마이너스통장 월 이자 계산기</h1>
+      <div class="sub">잔액 변동 구간별 일할계산 · 연 365일 기준</div>
+      <div class="stamp"><span>계산</span><span>완료</span></div>
+    </header>
+
+    <div class="panel">
+      <div class="section-title">기본 조건</div>
+      <div class="field-row">
+        <div>
+          <label for="rate">연이율 (%)</label>
+          <input type="number" id="rate" step="0.001" value="6.253">
+        </div>
+        <div>
+          <label for="ym">계산 대상 월</label>
+          <input type="month" id="ym" value="2026-07">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">거래내역 붙여넣기</div>
+      <div class="paste-hint">
+        날짜, 입금, 출금, 잔액 순서(탭 또는 2칸 이상 공백 구분)로 붙여넣으세요. 날짜는 "YYYY. M. D" 또는 연도 생략한 "M. D"도 인식되며(생략 시 가장 최근에 나온 연도를 사용), 마지막 줄의 월을 계산 대상 월로 자동 인식합니다.<br>
+        예) <code>2026. 7. 23&nbsp;&nbsp;₩41,800,000&nbsp;&nbsp;₩0&nbsp;&nbsp;-₩41,800,000</code>
+      </div>
+      <textarea id="pasteInput" placeholder="2026. 6. 28&#9;₩0&#9;₩0&#9;₩0
+2026. 7. 23&#9;₩41,800,000&#9;₩0&#9;-₩41,800,000
+2026. 7. 29&#9;₩0&#9;₩1,392,480&#9;-₩40,407,520
+2026. 7. 29&#9;₩0&#9;₩144,000&#9;-₩40,263,520"></textarea>
+      <div style="margin-top:10px;">
+        <button class="convert-btn" id="convertBtn" type="button">표로 변환</button>
+      </div>
+      <div class="error-box hidden" id="parseErrorBox">
+        <div class="error-title">파싱 오류</div>
+        <div id="parseErrorList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">잔액 변동 내역</div>
+      <div class="entries" id="entries"></div>
+      <button class="add-btn" id="addRow" type="button">+ 잔액 변동 추가</button>
+      <div class="warn hidden" id="warnMsg"></div>
+      <button class="calc-btn" id="calcBtn" type="button">이자 계산하기</button>
+    </div>
+
+    <div class="panel hidden" id="resultPanel">
+      <div class="result-total">
+        <div class="result-label">7월 예상 이자 합계</div>
+        <div class="result-amount" id="totalAmount">0원</div>
+        <div class="result-formula" id="daysInMonthNote"></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>구간</th>
+            <th>잔액</th>
+            <th>일수</th>
+            <th>계산식</th>
+            <th>이자</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">합계</td>
+            <td id="footTotal">0원</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="note">
+      <b>계산 공식</b><br>
+      구간 이자 = 잔액 × 연이율 ÷ 365 × 해당 구간 일수<br><br>
+      각 잔액은 입력한 날짜부터 <b>다음 변동일 전날까지</b>(마지막 항목은 월말까지) 적용됩니다.
+      은행에 따라 366일 기준, 원단위 절사 등 계산 방식이 다를 수 있으니 실제 이자는 은행 앱/약정서로 확인하세요.
+    </div>
+  </div>
+
+  <footer>Static page · no server, no tracking · GitHub Pages ready</footer>
+</div>
+
+<script>
+const entriesEl = document.getElementById('entries');
+const warnMsg = document.getElementById('warnMsg');
+let rowCount = 0;
+
+function addRow(dateVal, balVal){
+  rowCount++;
+  const row = document.createElement('div');
+  row.className = 'entry-row';
+  row.innerHTML = `
+    <div class="entry-idx">${String(rowCount).padStart(2,'0')}</div>
+    <div>
+      <label>변동일</label>
+      <input type="date" class="entry-date" value="${dateVal||''}">
+    </div>
+    <div>
+      <label>잔액 (원)</label>
+      <input type="number" class="entry-bal" placeholder="예: 40802649" value="${balVal!==undefined?balVal:''}">
+    </div>
+    <button class="del-btn" type="button" title="삭제">×</button>
+  `;
+  row.querySelector('.del-btn').addEventListener('click', ()=>{
+    row.remove();
+    renumber();
+  });
+  entriesEl.appendChild(row);
+}
+
+function renumber(){
+  const rows = entriesEl.querySelectorAll('.entry-row');
+  rows.forEach((r,i)=>{
+    r.querySelector('.entry-idx').textContent = String(i+1).padStart(2,'0');
+  });
+  rowCount = rows.length;
+}
+
+// 초기 예시 3행 (사용자 시나리오 예시: x, y, z)
+const ym0 = document.getElementById('ym').value;
+addRow(ym0+'-01', 40802649);
+addRow(ym0+'-08', 30000000);
+addRow(ym0+'-30', 30500000);
+
+document.getElementById('addRow').addEventListener('click', ()=>addRow());
+
+function fmt(n){
+  return Math.round(n).toLocaleString('ko-KR') + '원';
+}
+
+function daysInMonth(year, month){ // month: 1-12
+  return new Date(year, month, 0).getDate();
+}
+
+// ---- 붙여넣기 파서 ----
+const FULL_DATE_RE = /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/;
+const MD_ONLY_RE = /^(\d{1,2})\.\s*(\d{1,2})\.?$/;
+
+function parseAmount(raw){
+  const cleaned = raw.replace(/[₩,\s]/g,'');
+  if(cleaned === '' || !/^-?\d+$/.test(cleaned)) return null;
+  return parseInt(cleaned, 10);
+}
+
+function parsePastedText(text, defaultYear){
+  const lines = text.split('\n').map(l=>l.replace(/\r$/,''));
+  const errors = [];
+  const parsed = [];
+  let currentYear = defaultYear; // 연도가 생략된 줄은 가장 최근에 등장한(또는 기본) 연도를 사용
+
+  lines.forEach((line, idx)=>{
+    const lineNo = idx + 1;
+    if(line.trim() === '') return; // 빈 줄은 무시
+
+    const cols = line.split(/\t+|\s{2,}/).map(s=>s.trim()).filter(s=>s.length>0);
+    if(cols.length < 4){
+      errors.push(`${lineNo}번째 줄: 컬럼이 4개 미만입니다 (날짜/입금/출금/잔액 순서로 탭 구분 필요, ${cols.length}개 인식됨)`);
+      return;
+    }
+
+    const dateRaw = cols[0];
+    const balRaw = cols[cols.length - 1];
+
+    let yy, mm, dd;
+    const fullMatch = dateRaw.match(FULL_DATE_RE);
+    const mdMatch = dateRaw.match(MD_ONLY_RE);
+    if(fullMatch){
+      yy = parseInt(fullMatch[1],10); mm = parseInt(fullMatch[2],10); dd = parseInt(fullMatch[3],10);
+      currentYear = yy; // 이후 연도 생략 줄의 기준이 됨
+    } else if(mdMatch){
+      if(!currentYear){
+        errors.push(`${lineNo}번째 줄: 연도를 알 수 없습니다 ("${dateRaw}"). 최소 한 줄은 "YYYY. M. D" 형식으로 연도를 포함해주세요.`);
+        return;
+      }
+      yy = currentYear; mm = parseInt(mdMatch[1],10); dd = parseInt(mdMatch[2],10);
+    } else {
+      errors.push(`${lineNo}번째 줄: 날짜 형식을 인식할 수 없습니다 ("${dateRaw}"). "YYYY. M. D" 또는 "M. D" 형식이어야 합니다.`);
+      return;
+    }
+
+    if(mm < 1 || mm > 12 || dd < 1 || dd > 31){
+      errors.push(`${lineNo}번째 줄: 날짜 값이 올바르지 않습니다 ("${dateRaw}").`);
+      return;
+    }
+
+    const amount = parseAmount(balRaw);
+    if(amount === null){
+      errors.push(`${lineNo}번째 줄: 잔액 금액을 인식할 수 없습니다 ("${balRaw}").`);
+      return;
+    }
+
+    const iso = `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    parsed.push({ date: iso, balance: Math.abs(amount), lineNo });
+  });
+
+  return { parsed, errors };
+}
+
+function showParseErrors(errors){
+  const box = document.getElementById('parseErrorBox');
+  const list = document.getElementById('parseErrorList');
+  if(errors.length === 0){
+    box.classList.add('hidden');
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = errors.map(e=>`· ${e}`).join('<br>');
+  box.classList.remove('hidden');
+}
+
+document.getElementById('convertBtn').addEventListener('click', ()=>{
+  const text = document.getElementById('pasteInput').value;
+  if(text.trim() === ''){
+    showParseErrors(['붙여넣을 거래내역이 비어 있습니다.']);
+    return;
+  }
+
+  const ymYear = parseInt((document.getElementById('ym').value || '').split('-')[0], 10) || null;
+  const { parsed, errors } = parsePastedText(text, ymYear);
+
+  if(errors.length > 0){
+    showParseErrors(errors);
+    return;
+  }
+  if(parsed.length === 0){
+    showParseErrors(['인식된 거래내역이 없습니다.']);
+    return;
+  }
+
+  showParseErrors([]);
+
+  // 계산 대상 월: 입력된 마지막 줄의 연-월 기준
+  const last = parsed[parsed.length - 1];
+  const [ly, lm] = last.date.split('-');
+  document.getElementById('ym').value = `${ly}-${lm}`;
+
+  // 날짜순 정렬 (동일 날짜는 입력 순서 유지 - stable sort)
+  const sorted = [...parsed].sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  // 잔액 변동 내역 표를 새로 채움
+  entriesEl.innerHTML = '';
+  rowCount = 0;
+  sorted.forEach(e => addRow(e.date, e.balance));
+
+  runCalculation();
+});
+
+document.getElementById('calcBtn').addEventListener('click', runCalculation);
+
+function runCalculation(){
+  warnMsg.classList.add('hidden');
+  const rate = parseFloat(document.getElementById('rate').value);
+  const ymVal = document.getElementById('ym').value; // "2026-07"
+  if(!ymVal || isNaN(rate)){
+    warnMsg.textContent = '연이율과 계산 대상 월을 입력해주세요.';
+    warnMsg.classList.remove('hidden');
+    return;
+  }
+  const [year, month] = ymVal.split('-').map(Number);
+  const lastDay = daysInMonth(year, month);
+  const monthStart = new Date(year, month-1, 1);
+  const monthEnd = new Date(year, month-1, lastDay);
+
+  const rows = Array.from(entriesEl.querySelectorAll('.entry-row'));
+  let entries = rows.map(r=>{
+    const d = r.querySelector('.entry-date').value;
+    const b = parseFloat(r.querySelector('.entry-bal').value);
+    return {date: d, balance: b};
+  }).filter(e=>e.date && !isNaN(e.balance));
+
+  if(entries.length===0){
+    warnMsg.textContent = '잔액 변동 내역을 최소 1개 이상 입력해주세요.';
+    warnMsg.classList.remove('hidden');
+    return;
+  }
+
+  entries.sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  // 월초보다 첫 항목이 늦으면 경고 (0원 처리하지 않고, 첫 항목 잔액을 월초부터 적용)
+  const firstDate = new Date(entries[0].date);
+  let noteMsg = '';
+  if(firstDate > monthStart){
+    noteMsg = `※ 월초(${month}/1) ~ 첫 입력일 전까지는 첫 잔액(${entries[0].balance.toLocaleString('ko-KR')}원)이 계속 적용된 것으로 계산했습니다.`;
+  }
+
+  const segments = [];
+  for(let i=0;i<entries.length;i++){
+    let segStart = new Date(entries[i].date);
+    if(i===0 && segStart > monthStart) segStart = new Date(monthStart);
+    if(segStart < monthStart) segStart = new Date(monthStart);
+
+    let segEnd;
+    if(i < entries.length-1){
+      const nextStart = new Date(entries[i+1].date);
+      segEnd = new Date(nextStart);
+      segEnd.setDate(segEnd.getDate()-1);
+    } else {
+      segEnd = new Date(monthEnd);
+    }
+    if(segEnd > monthEnd) segEnd = new Date(monthEnd);
+    if(segEnd < segStart) continue; // 해당월 밖 구간은 스킵
+
+    const days = Math.round((segEnd - segStart)/(1000*60*60*24)) + 1;
+    if(days<=0) continue;
+    const balance = entries[i].balance;
+    const interest = balance * (rate/100) / 365 * days;
+
+    segments.push({
+      label: `${fmtDate(segStart)} ~ ${fmtDate(segEnd)}`,
+      balance, days, interest
+    });
+  }
+
+  renderResult(segments, rate, lastDay, noteMsg);
+}
+
+function fmtDate(d){
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function renderResult(segments, rate, lastDay, noteMsg){
+  const body = document.getElementById('resultBody');
+  body.innerHTML = '';
+  let total = 0;
+  segments.forEach(s=>{
+    total += s.interest;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${s.label}</td>
+      <td>${Math.round(s.balance).toLocaleString('ko-KR')}원</td>
+      <td>${s.days}일</td>
+      <td class="formula-cell">${Math.round(s.balance).toLocaleString('ko-KR')} × ${rate}% ÷ 365 × ${s.days}</td>
+      <td>${fmt(s.interest)}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  document.getElementById('totalAmount').textContent = fmt(total);
+  document.getElementById('footTotal').textContent = fmt(total);
+  document.getElementById('daysInMonthNote').textContent =
+    `해당 월 총 ${lastDay}일 기준 · ${segments.length}개 구간 합산` + (noteMsg ? ` · ${noteMsg}` : '');
+
+  document.getElementById('resultPanel').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
