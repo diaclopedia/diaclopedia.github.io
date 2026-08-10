@@ -357,8 +357,8 @@
           <input type="number" id="rate" step="0.001" value="6.253">
         </div>
         <div>
-          <label for="ym">계산 대상 월</label>
-          <input type="month" id="ym" value="2026-07">
+          <label for="cutoffDay">이자 결산 기준일 (매월)</label>
+          <input type="number" id="cutoffDay" min="1" max="28" value="10">
         </div>
       </div>
     </div>
@@ -366,7 +366,7 @@
     <div class="panel">
       <div class="section-title">거래내역 붙여넣기</div>
       <div class="paste-hint">
-        날짜, 입금, 출금, 잔액 순서(탭 또는 2칸 이상 공백 구분)로 붙여넣으세요. 날짜는 "YYYY. M. D" 또는 연도 생략한 "M. D"도 인식되며(생략 시 가장 최근에 나온 연도를 사용), 마지막 줄의 월을 계산 대상 월로 자동 인식합니다.<br>
+        날짜, 입금, 출금, 잔액 순서(탭 또는 2칸 이상 공백 구분)로 붙여넣으세요. 날짜는 "YYYY. M. D" 또는 연도 생략한 "M. D"도 인식됩니다(생략 시 가장 최근에 나온 연도를 사용). 계산 기간은 마지막 줄 날짜를 기준으로 자동 결정됩니다(아래 계산 방식 참고).<br>
         예) <code>2026. 7. 23&nbsp;&nbsp;₩41,800,000&nbsp;&nbsp;₩0&nbsp;&nbsp;-₩41,800,000</code>
       </div>
       <textarea id="pasteInput" placeholder="2026. 6. 28&#9;₩0&#9;₩0&#9;₩0
@@ -420,7 +420,10 @@
     <div class="note">
       <b>계산 공식</b><br>
       구간 이자 = 잔액 × 연이율 ÷ 365 × 해당 구간 일수<br><br>
-      각 잔액은 입력한 날짜부터 <b>다음 변동일 전날까지</b>(마지막 항목은 월말까지) 적용됩니다.
+      <b>결산 기간</b>은 입력한 항목 중 가장 마지막(최근) 날짜를 기준으로, 그 날짜 이후 가장 가까운 "이자 결산 기준일"까지로 자동 설정됩니다.
+      (예: 기준일 10일 · 마지막 항목이 8/3이면 → 결산기간은 7/10 ~ 8/9)<br><br>
+      각 잔액은 입력한 날짜부터 <b>다음 변동일 전날까지</b>(마지막 항목은 결산기간 종료일까지) 적용되며,
+      첫 항목의 날짜가 결산기간 시작일보다 이르면 그 이전 구간은 제외하고 시작일부터 계산합니다.<br><br>
       은행에 따라 366일 기준, 원단위 절사 등 계산 방식이 다를 수 있으니 실제 이자는 은행 앱/약정서로 확인하세요.
     </div>
   </div>
@@ -465,10 +468,9 @@ function renumber(){
 }
 
 // 초기 예시 3행 (사용자 시나리오 예시: x, y, z)
-const ym0 = document.getElementById('ym').value;
-addRow(ym0+'-01', 40802649);
-addRow(ym0+'-08', 30000000);
-addRow(ym0+'-30', 30500000);
+addRow('2026-06-10', 40802649);
+addRow('2026-07-08', 30000000);
+addRow('2026-07-30', 30500000);
 
 document.getElementById('addRow').addEventListener('click', ()=>addRow());
 
@@ -476,8 +478,21 @@ function fmt(n){
   return Math.round(n).toLocaleString('ko-KR') + '원';
 }
 
-function daysInMonth(year, month){ // month: 1-12
-  return new Date(year, month, 0).getDate();
+// 이자 결산 기준일(예: 매월 10일)을 기준으로, 주어진 날짜가 속한 결산주기의 시작일/종료일을 반환
+// 주기 = 전달 기준일 ~ 이번달 (기준일-1일). 예: 기준일 10일 -> 7/10 ~ 8/9
+function getPeriodBounds(date, cutoffDay){
+  const d = date.getDate();
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-indexed
+  let periodStart, periodEnd;
+  if(d >= cutoffDay){
+    periodStart = new Date(year, month, cutoffDay);
+    periodEnd = new Date(year, month+1, cutoffDay-1);
+  } else {
+    periodStart = new Date(year, month-1, cutoffDay);
+    periodEnd = new Date(year, month, cutoffDay-1);
+  }
+  return { periodStart, periodEnd };
 }
 
 // ---- 붙여넣기 파서 ----
@@ -563,8 +578,8 @@ document.getElementById('convertBtn').addEventListener('click', ()=>{
     return;
   }
 
-  const ymYear = parseInt((document.getElementById('ym').value || '').split('-')[0], 10) || null;
-  const { parsed, errors } = parsePastedText(text, ymYear);
+  const defaultYear = new Date().getFullYear();
+  const { parsed, errors } = parsePastedText(text, defaultYear);
 
   if(errors.length > 0){
     showParseErrors(errors);
@@ -576,11 +591,6 @@ document.getElementById('convertBtn').addEventListener('click', ()=>{
   }
 
   showParseErrors([]);
-
-  // 계산 대상 월: 입력된 마지막 줄의 연-월 기준
-  const last = parsed[parsed.length - 1];
-  const [ly, lm] = last.date.split('-');
-  document.getElementById('ym').value = `${ly}-${lm}`;
 
   // 날짜순 정렬 (동일 날짜는 입력 순서 유지 - stable sort)
   const sorted = [...parsed].sort((a,b)=> new Date(a.date) - new Date(b.date));
@@ -598,16 +608,12 @@ document.getElementById('calcBtn').addEventListener('click', runCalculation);
 function runCalculation(){
   warnMsg.classList.add('hidden');
   const rate = parseFloat(document.getElementById('rate').value);
-  const ymVal = document.getElementById('ym').value; // "2026-07"
-  if(!ymVal || isNaN(rate)){
-    warnMsg.textContent = '연이율과 계산 대상 월을 입력해주세요.';
+  const cutoffDay = parseInt(document.getElementById('cutoffDay').value, 10);
+  if(isNaN(rate) || isNaN(cutoffDay) || cutoffDay < 1 || cutoffDay > 28){
+    warnMsg.textContent = '연이율과 이자 결산 기준일(1~28)을 올바르게 입력해주세요.';
     warnMsg.classList.remove('hidden');
     return;
   }
-  const [year, month] = ymVal.split('-').map(Number);
-  const lastDay = daysInMonth(year, month);
-  const monthStart = new Date(year, month-1, 1);
-  const monthEnd = new Date(year, month-1, lastDay);
 
   const rows = Array.from(entriesEl.querySelectorAll('.entry-row'));
   let entries = rows.map(r=>{
@@ -624,18 +630,26 @@ function runCalculation(){
 
   entries.sort((a,b)=> new Date(a.date) - new Date(b.date));
 
-  // 월초보다 첫 항목이 늦으면 경고 (0원 처리하지 않고, 첫 항목 잔액을 월초부터 적용)
+  // 계산 기간: 마지막(가장 최근) 항목의 날짜를 기준으로, 그 날짜 이후 가장 가까운 결산일까지가 periodEnd
+  // periodStart는 periodEnd의 한 달 전 결산일
+  const lastEntryDate = new Date(entries[entries.length-1].date);
+  const periodEnd_periodStart = getPeriodBounds(lastEntryDate, cutoffDay);
+  const periodStart = periodEnd_periodStart.periodStart;
+  const periodEnd = periodEnd_periodStart.periodEnd;
+  const totalDays = Math.round((periodEnd - periodStart)/(1000*60*60*24)) + 1;
+
+  // 시작일 규칙: 첫 항목이 periodStart(기준일)이면 그대로, 그 전이면 periodStart부터 적용(그 이전 구간은 제외)
   const firstDate = new Date(entries[0].date);
   let noteMsg = '';
-  if(firstDate > monthStart){
-    noteMsg = `※ 월초(${month}/1) ~ 첫 입력일 전까지는 첫 잔액(${entries[0].balance.toLocaleString('ko-KR')}원)이 계속 적용된 것으로 계산했습니다.`;
+  if(firstDate.getTime() !== periodStart.getTime()){
+    noteMsg = `※ ${fmtDate(periodStart)} 이전 구간은 제외하고, 첫 잔액(${entries[0].balance.toLocaleString('ko-KR')}원)을 ${fmtDate(periodStart)}부터 적용해 계산했습니다.`;
   }
 
   const segments = [];
   for(let i=0;i<entries.length;i++){
     let segStart = new Date(entries[i].date);
-    if(i===0 && segStart > monthStart) segStart = new Date(monthStart);
-    if(segStart < monthStart) segStart = new Date(monthStart);
+    if(i===0 && segStart > periodStart) segStart = new Date(periodStart);
+    if(segStart < periodStart) segStart = new Date(periodStart);
 
     let segEnd;
     if(i < entries.length-1){
@@ -643,10 +657,10 @@ function runCalculation(){
       segEnd = new Date(nextStart);
       segEnd.setDate(segEnd.getDate()-1);
     } else {
-      segEnd = new Date(monthEnd);
+      segEnd = new Date(periodEnd);
     }
-    if(segEnd > monthEnd) segEnd = new Date(monthEnd);
-    if(segEnd < segStart) continue; // 해당월 밖 구간은 스킵
+    if(segEnd > periodEnd) segEnd = new Date(periodEnd);
+    if(segEnd < segStart) continue; // 기간 밖 구간은 스킵
 
     const days = Math.round((segEnd - segStart)/(1000*60*60*24)) + 1;
     if(days<=0) continue;
@@ -659,14 +673,14 @@ function runCalculation(){
     });
   }
 
-  renderResult(segments, rate, lastDay, noteMsg);
+  renderResult(segments, rate, totalDays, noteMsg, periodStart, periodEnd);
 }
 
 function fmtDate(d){
   return `${d.getMonth()+1}/${d.getDate()}`;
 }
 
-function renderResult(segments, rate, lastDay, noteMsg){
+function renderResult(segments, rate, totalDays, noteMsg, periodStart, periodEnd){
   const body = document.getElementById('resultBody');
   body.innerHTML = '';
   let total = 0;
@@ -685,8 +699,9 @@ function renderResult(segments, rate, lastDay, noteMsg){
 
   document.getElementById('totalAmount').textContent = fmt(total);
   document.getElementById('footTotal').textContent = fmt(total);
+  const periodLabel = `${periodStart.getFullYear()}.${fmtDate(periodStart)} ~ ${periodEnd.getFullYear()}.${fmtDate(periodEnd)}`;
   document.getElementById('daysInMonthNote').textContent =
-    `해당 월 총 ${lastDay}일 기준 · ${segments.length}개 구간 합산` + (noteMsg ? ` · ${noteMsg}` : '');
+    `결산기간 ${periodLabel} (총 ${totalDays}일) · ${segments.length}개 구간 합산` + (noteMsg ? ` · ${noteMsg}` : '');
 
   document.getElementById('resultPanel').classList.remove('hidden');
 }
